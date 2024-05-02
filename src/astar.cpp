@@ -1,26 +1,21 @@
 #include <memory>
 
-#include "../include/astar.hpp"
+#include "include/astar.hpp"
 
-// using std::shared_ptr;
-using std::make_pair;
-using std::make_shared;
-using namespace astar;
-
-AStar::AStar(shared_ptr<Node> start, shared_ptr<Node> goal) 
-                        :  start_(start),
-                            goal_(goal),
-                            foundPath(false){
-
-    open_list.push(start_);
-    open_list_lookup.insert({make_pair(start_->x_, start_->y_), start_->f_});
+AStar::AStar(Map& map, Pair& start, Pair& goal) 
+                        :  map_(map), foundPath(false), collision_threshold(1){
+    map_size = map_.get_size();
+    start_ = std::make_shared<Node>(start.first, start.second, 
+                                    0.0, 0.0, 0.0, nullptr);
+    goal_ = std::make_shared<Node>(goal.first, goal.second, 
+                                    0.0, 0.0, 0.0, nullptr);
 }
 
 double AStar::getG(int x, int y){
-    // TODO: read from map
-    return 0.0;
+    return map_.map[x][y];
 }
 
+// Euclidean distance heuristic
 double AStar::calcHeuristic(int x, int y){
     return ((double)sqrt((x - goal_->x_) * (x - goal_->x_) + 
                             (y - goal_->y_) * (y - goal_->y_)));
@@ -38,60 +33,82 @@ bool AStar::isCollisionFree(int x, int y){
         return false;
 }
 
+void AStar::Plan(){
+    std::cout << "Start planning ... " << start_->x_ << " " << start_->y_ << std::endl;
 
-void AStar::AStar_Planner(){
-
-    while(!open_list.empty()){
-        shared_ptr<Node> current_node = open_list.top();
+    open_list.push(start_);
+    open_list_lookup.insert({std::make_pair(start_->x_, start_->y_), start_->f_});
+    
+    while(!open_list.empty() && !foundPath){
+        std::shared_ptr<Node> current_node = open_list.top();
         open_list.pop();
-        open_list_lookup.erase(make_pair(current_node->x_, current_node->y_));
+        open_list_lookup.erase(std::make_pair(current_node->x_, current_node->y_));
 
-        if(closed_list.find(make_pair(current_node->x_, current_node->y_)) != closed_list.end())
-            continue;
+        // if open list top is the goal then goal is reached
+        // TODO: Refine
+        if((goal_->x_ == current_node->x_) && (goal_->y_ == current_node->y_)){
+            std::cout << "Path to goal is found" << std::endl;
+            foundPath = true;
+            backtrack(current_node);
+
+            break;
+        }
+
+        if(closed_list.find(std::make_pair(current_node->x_, current_node->y_)) != closed_list.end())
+           continue;
         else    
-            closed_list.insert({make_pair(current_node->x_, current_node->y_), current_node});
+            closed_list.insert({std::make_pair(current_node->x_, current_node->y_), current_node});
 
          for(int i=0; i<NUM_DIRS; i++){
-
+            
             int sX = current_node->x_ + dX[i];
             int sY = current_node->y_ + dY[i];
-
             if (isValid(sX, sY) && isCollisionFree(sX, sY)){
 
-                if(closed_list.find(make_pair(sX, sY))!=closed_list.end()){
+                if(closed_list.find(std::make_pair(sX, sY))!=closed_list.end()){
                     continue;
                 }
 
-                double newG = current_node->g_ + getG(sX, sY) + 0.3*current_node->t_;            
+                double newG = current_node->g_ + getG(sX, sY);            
                 double newH = calcHeuristic(sX, sY);
                 double newF = newG + newH;
 
-                auto succesor = make_shared<Node>(sX, sY, (current_node->t_)+1, newG, newH, newF, current_node);
+                auto succesor = std::make_shared<Node>(sX, sY, newG, newH, newF, current_node);
 
-                if(open_list_lookup.find(make_pair(succesor->x_, succesor->y_))!=open_list_lookup.end()){
-                    if(open_list_lookup[make_pair(succesor->x_, succesor->y_)] < succesor->f_){
+                if(open_list_lookup.find(std::make_pair(succesor->x_, succesor->y_))!=open_list_lookup.end()){
+                    if(open_list_lookup[std::make_pair(succesor->x_, succesor->y_)] < succesor->f_){
                         continue;
                     }
                     else{
                         open_list.push(succesor);
-                        open_list_lookup[make_pair(succesor->x_, succesor->y_)] = succesor->f_;
+                        open_list_lookup[std::make_pair(succesor->x_, succesor->y_)] = succesor->f_;
                     }
                 }
                 else{
                     open_list.push(succesor);
-                    open_list_lookup.insert({make_pair(succesor->x_, succesor->y_), succesor->f_});
+                    open_list_lookup.insert({std::make_pair(succesor->x_, succesor->y_), succesor->f_});
                 }
             }
         }
     }
+
+    if (!foundPath)
+        std::cout << "Path not found" << std::endl;
 }
 
-void AStar::backtrack(shared_ptr<Node> &last_node){
-    printf("Target Cell: [%d %d]\n", last_node->x_, last_node->y_);
+void AStar::backtrack(std::shared_ptr<Node>& last_node){
     while(last_node->parent_ != nullptr){
-        Path.push_back(make_pair(last_node->x_, last_node->y_));
+        Path.push_back(std::make_pair(last_node->x_, last_node->y_));
         last_node = (last_node->parent_);
     }
-    foundPath = true;
-    printf("First [%d %d] -> Last [%d %d]\n", Path.back().first, Path.back().second, Path.front().first, Path.front().second);
+    printf("Start [%d %d] -> Goal [%d %d]\n", Path.back().first, Path.back().second, Path.front().first, Path.front().second);
+    std::reverse(Path.begin(), Path.end());
+}
+
+void AStar::print_plan(){
+    std::cout << "A Star path plan" << std::endl;
+
+    for(auto p : Path){
+        printf(" [%d %d] -> \n", p.first, p.second);
+    }
 }
