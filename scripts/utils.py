@@ -4,8 +4,10 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+from abc import ABC, abstractmethod
 
-class Map():
+
+class Map(ABC):
 
     def __init__(self, filepath):
         self.map = []
@@ -30,9 +32,35 @@ class Map():
 
         self.map = np.array(data).reshape(self.height, self.width)
 
+    @abstractmethod
     def plot_map(self, ax):
+        pass
+
+
+class CostMap(Map):
+
+    def __init__(self, filepath):
+        self.build_map(filepath=filepath)
+
+    def plot_map(self, ax):
+        plt.gca().invert_yaxis()
         plt.imshow(self.map, interpolation='nearest')
         plt.colorbar()
+
+
+class ObstacleMap(Map):
+
+    def __init__(self, filepath):
+        self.build_map(filepath=filepath)
+
+    def build_map(self, filepath):
+        super().build_map(filepath)
+        self.obs_map = np.where(self.map == 1)
+
+    def plot_map(self, ax):
+        plt.gca().invert_yaxis()
+        # s: square plot, k: black color
+        plt.plot(self.obs_map[1], self.obs_map[0], 'sk')
 
 
 class Path():
