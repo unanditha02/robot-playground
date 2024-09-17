@@ -7,56 +7,46 @@
 
 int main(int argc, char** argv) {
 	
-	try{
-			clock_t time_begin;
-			clock_t time_end;
-
-			// load map
-			// TODO: Use pointers 
-			std::string _filepath;
-			_filepath = "resources/map_basic.txt";
-			
-			Map mymap(_filepath);
-			mymap.print_map();
-
-			// set start and goal poses
-			// auto start = std::make_pair(10, 10);	// -y, x
-			// auto goal = std::make_pair(18, 10); 
-
-			auto start = std::make_pair(10, 10);	// -y, x
-			auto goal = std::make_pair(18, 20); 
-
-			// create planner object and plan path
-			AStar myplanner(mymap, start, goal);
-
-			// TODO: Clean up time calculation
-			time_begin = clock();
-			// planning 
-			myplanner.Plan();
-			time_end = clock();	
-			std::cout << "A Star Planner: " << double(time_end - time_begin) / CLOCKS_PER_SEC << " seconds" << std::endl;
-			
-			// print plan
-			myplanner.print_plan();
-
-			// write to file
-			std::string result_path;
-			result_path = "resources/path.txt";
-
-			std::ofstream myfile;
-			myfile.open (result_path);
-			for(auto p : myplanner.Path){
-				myfile << p.first << " " << p.second << "\n";
-			}
-			
-			myfile.close();
-
-			// TODO: read and plot
-		}
-
-		catch(const std::exception& e){
-			std::cout << "ERROR!!!" << std::endl;
-		}
-    
+	std::string map_filepath = argv[1];
+	std::string result_filepath = argv[2];
+	auto start = std::make_pair(std::stoi(argv[3]), std::stoi(argv[4])); 	// std::make_pair(10, 10);	// -y, x
+	auto goal = std::make_pair(std::stoi(argv[5]), std::stoi(argv[6]));		// std::make_pair(25, 40)
 	
+	try{
+		clock_t time_begin;
+		clock_t time_end;
+
+		// load map
+		// TODO: Use pointers 
+		Map mymap(map_filepath);
+
+		// create planner object and plan path
+		AStar myplanner(mymap, start, goal);
+
+		// TODO: Clean up time calculation
+		time_begin = clock();
+
+		// planning 
+		myplanner.Plan();
+		time_end = clock();	
+		std::cout << "A Star Planner: " << double(time_end - time_begin) / CLOCKS_PER_SEC << " seconds" << std::endl;
+		
+		// write to file
+		std::ofstream myfile;
+		myfile.open (result_filepath);
+		for(auto p : myplanner.Path){
+			myfile << p.first << " " << p.second << "\n";
+		}
+		// TODO: Plot visited cells
+		// for(auto p : myplanner.Visited){
+		// 	myfile << p.first << " " << p.second << "\n";
+		// }
+		myfile.close();
+		// TODO: read and plot
+	}
+
+	catch(const std::exception& e){
+		std::cout << "ERROR!!!" << std::endl;
+	}
+    
 }

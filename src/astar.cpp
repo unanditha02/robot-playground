@@ -56,8 +56,11 @@ void AStar::Plan(){
 
         if(closed_list.find(std::make_pair(current_node->x_, current_node->y_)) != closed_list.end())
            continue;
-        else    
-            closed_list.insert({std::make_pair(current_node->x_, current_node->y_), current_node});
+        else{    
+            auto pose = std::make_pair(current_node->x_, current_node->y_);
+            closed_list.insert({pose, current_node});
+            Visited.push_back(pose);
+        }
 
          for(int i=0; i<NUM_DIRS; i++){
             

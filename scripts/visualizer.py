@@ -1,12 +1,16 @@
+#!/usr/bin/python3
 
+import argparse
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 
-from utils import Map, Path
+from utils import ObstacleMap, Path
 
 
 class Visualizer:
-
+    """
+    Class to setup frames for the Animation plot
+    """
     def __init__(self, ax):
         self.path = []
         self.frames = 0
@@ -15,8 +19,6 @@ class Visualizer:
     def update(self, i):
         p = self.path[i]
         self.ax.plot(p[1], p[0], 'ro')
-        self.ax.set_xlim([0, 50])
-        self.ax.set_ylim([50, 0])
 
     def get_path(self, path):
         self.path = path
@@ -24,15 +26,20 @@ class Visualizer:
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--map-filepath', type=str, required=True)
+    parser.add_argument('-r', '--result-filepath', type=str, required=True)
+    parser.add_argument('-v', '--viz-filepath', type=str, required=True)
+    args = parser.parse_args()
 
-    map_path = 'resources/map_basic.txt'
-    result_path = 'resources/path.txt'
-    gif_path = 'results/astar.gif'
+    map_path = args.map_filepath
+    result_path = args.result_filepath
+    gif_path = args.viz_filepath
 
     fig, ax = plt.subplots()
     ax.set_title('A Star Path')
 
-    mymap = Map(filepath=map_path)
+    mymap = ObstacleMap(filepath=map_path)
     mymap.plot_map(ax)
 
     mypath = Path(filepath=result_path)

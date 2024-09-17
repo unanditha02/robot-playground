@@ -65,6 +65,7 @@ class AStar{
     public:
         bool foundPath;
         std::vector<Pair> Path;
+        std::vector<Pair> Visited;
 
         // TODO: map size, collision threshold to added to constructor
         AStar(Map& map, Pair& start, Pair& goal);
